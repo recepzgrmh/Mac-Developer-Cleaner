@@ -6,6 +6,7 @@ build/
 DerivedData/
 .swiftpm/
 .build/
+.build-xcode/
 *.xcodeproj/
 *.xcworkspace/
 
@@ -20,3 +21,4 @@ _bmad-output/
 # Binaries
 *.dmg
 *.app
+dist/

@@ -1,47 +1,104 @@
 <p align="center">
-  <img src="assets/app_icon.png" width="128" height="128" alt="DevReclaim Logo">
+  <img src="assets/app_icon.png" width="128" height="128" alt="DevReclaim logo" />
 </p>
 
-# DevReclaim (formerly Mac-Developer-Cleaner)
+# DevReclaim
 
-## 🎯 Project Essence
-**DevReclaim** is a lightweight, native macOS utility built with **SwiftUI** and **Swift 5.9+**. It reclaims disk space by safely cleaning developer-specific artifacts (npm, Xcode, CocoaPods, etc.) while maintaining a minimal footprint (<15MB) and premium UX.
+**A native macOS disk cleaner for developers.**
 
-## 🛠 Tech Stack & Architecture
-- **Framework:** SwiftUI (@Observable macro based).
-- **Architecture:** Modular MVVM with specialized card-based UI.
-- **Project Structure:** Swift Package Manager (SPM). **Open via `Package.swift`**.
-- **Engine:** Foundation-based asynchronous scanning and execution.
-- **Ruleset:** "Native-First, Trash-Fallback" logic with explicit user consent and risk-based decision support.
+DevReclaim helps you reclaim storage safely by cleaning developer junk such as **Xcode DerivedData**, **npm/yarn/pnpm caches**, **CocoaPods artifacts**, **Gradle caches**, and **Flutter/Dart build leftovers**.
 
-## 🧠 Critical AI Context (Read before editing)
+If you searched for terms like **"macOS developer cleaner"**, **"Xcode cache cleaner"**, **"DerivedData cleaner"**, or **"delete npm cache on Mac"**, this app is built for exactly that workflow.
 
-### 1. Swift 6 & Async Contexts
-- **File Enumeration:** In `ScannerService.swift`, always use `while let fileURL = enumerator.nextObject() as? URL` to avoid "makeIterator" errors in Swift 6.
-- **Redundant Try:** Functions in `ScannerService` are optimized; avoid adding `try await` where `Task.detached` handles the threading.
+[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange)](https://swift.org)
+[![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B-blue)](https://www.apple.com/macos)
+[![Release](https://img.shields.io/github/v/release/recepzgrmh/Mac-Developer-Cleaner)](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases)
 
-### 2. State Management & Equatable
-- **ExecutionState:** Located in `ExecutionViewModel.swift`. Implement `Equatable` manually for any state with associated values to ensure stable UI comparisons.
-- **Matching Model:** `ScanTarget` uses `matchingPresetId: String?`. DO NOT use the full `Preset` object in the target model to prevent reference cycles and simplify serialization.
+## Download
 
-### 3. Window & UI Management
-- **Window Styles:** Uses `.unifiedCompact` toolbar and `.titleBar` window styles for a native look. Minimum window size is 900x600.
-- **SF Symbols:** Always prioritize compatibility (e.g., use `list.bullet.indent` instead of `list.bullet.rectangle.stack` for better macOS version support).
+- Latest release: [Download from GitHub Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/latest)
+- Current stable (v1.1.2): [DevReclaim v1.1.2](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/tag/v1.1.2)
 
-### 4. Safety & Guardrails
-- **.git Boundary:** The scanner NEVER treats a `.git` root as a cleanup target.
-- **Trash Fallback:** If a `NativeCommandExecutor` fails, transition to `.awaitingTrashConsent` to prompt the user. NEVER move items to Trash silently.
+## Why DevReclaim
 
-## 🚀 How to Build & Package
-1. Open `Package.swift` in Xcode.
-2. Select **My Mac** as the destination.
-3. Build/Run with `Cmd + R`.
-4. To create a release DMG, run: `bash scripts/package.sh`.
+Most cleaner apps are generic, heavy, and risky. DevReclaim is intentionally focused on developer environments.
 
-## 📂 Key Files Map
-- `DevReclaim/Core/Engine/`: The brain (Scanner, Executor).
-- `DevReclaim/UI/ViewModels/`: Logic for views.
-- `DevReclaim/UI/Views/Common/`: Reusable premium UI components (Cards, Badges, Banners).
-- `DevReclaim/UI/MainSplitView.swift`: The main layout orchestrator.
-- `DevReclaim/Models/`: Domain models (Preset, ScanTarget, ExecutionReport).
-- `_bmad-output/planning-artifacts/`: Requirements & Specs.
+- Native SwiftUI app (no Electron/WebView overhead)
+- Lightweight footprint
+- Safety-first cleanup flow
+- Built specifically for dev tools and build systems
+- Clear audit/history of reclaimed space
+
+## Key Features
+
+- Smart scanning for developer-specific reclaim targets
+- Preset-based cleanup for common ecosystems
+- Dashboard-style overview for reclaimable space
+- Execution history with audit-friendly logs
+- Native-first cleanup with fallback flows
+
+## Safety Model
+
+- `.git` boundaries are respected
+- No silent destructive actions
+- Risk-aware cleanup behavior
+- Explicit user intent before irreversible operations
+
+## What It Can Clean
+
+- Xcode: DerivedData, archives, logs
+- JavaScript: npm cache, Yarn cache, pnpm store
+- Apple/mobile: CocoaPods artifacts, Flutter/Dart cache
+- Android/JVM: Gradle cache artifacts
+- General developer cache leftovers
+
+## Quick Start (User)
+
+1. Open the latest `.dmg` from Releases.
+2. Drag **DevReclaim.app** into **Applications**.
+3. Launch DevReclaim and run a scan.
+4. Review findings and apply cleanup safely.
+
+## Build From Source
+
+Requirements:
+
+- macOS 14+
+- Xcode 15+
+- Swift 5.9+
+
+Steps:
+
+1. Clone the repository.
+2. Open `Package.swift` in Xcode.
+3. Select **My Mac**.
+4. Build and run with `Cmd + R`.
+
+## Package a DMG
+
+```bash
+bash scripts/package.sh 1.1.2
+```
+
+This creates a distributable DMG under `dist/`.
+
+## Project Structure
+
+- `DevReclaim/Core/Engine`: scanning and core logic
+- `DevReclaim/Core/Executors`: cleanup execution paths
+- `DevReclaim/UI/ViewModels`: state and presentation logic
+- `DevReclaim/UI/Views`: SwiftUI screens/components
+- `DevReclaim/Models`: domain models
+
+## Contributing
+
+Contributions are welcome.
+
+1. Fork the repo
+2. Create a feature branch
+3. Commit your changes
+4. Open a pull request
+
+## License
+
+MIT License.
