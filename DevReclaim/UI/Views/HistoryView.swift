@@ -8,6 +8,13 @@ struct HistoryView: View {
             if vm.isFetching {
                 ProgressView("Fetching history...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let error = vm.lastError {
+                ContentUnavailableView(
+                    "History Unavailable",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(error)
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if vm.reports.isEmpty {
                 ContentUnavailableView(
                     "No History Found",
@@ -22,7 +29,7 @@ struct HistoryView: View {
                             Image(systemName: report.wasSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .foregroundColor(report.wasSuccess ? .green : .red)
                                 .frame(width: 16)
-                            Text(report.presetId)
+                            Text(vm.presetDisplayName(for: report))
                                 .font(.subheadline)
                                 .lineLimit(1)
                                 .truncationMode(.tail)
@@ -30,12 +37,10 @@ struct HistoryView: View {
                     }
 
                     TableColumn("Method") { report in
-                        Label(
-                            report.executionMode == .native ? "Native" : "Trash",
-                            systemImage: report.executionMode == .native ? "terminal" : "trash"
-                        )
-                        .font(.subheadline)
-                        .lineLimit(1)
+                        let method = methodDisplay(for: report.executionMode)
+                        Label(method.label, systemImage: method.icon)
+                            .font(.subheadline)
+                            .lineLimit(1)
                     }
                     .width(min: 80, ideal: 100, max: 120)
 
@@ -59,6 +64,17 @@ struct HistoryView: View {
         .navigationTitle("History")
         .task {
             await vm.fetchHistory()
+        }
+    }
+
+    private func methodDisplay(for mode: ExecutionMode) -> (label: String, icon: String) {
+        switch mode {
+        case .native:
+            return ("Native", "terminal")
+        case .trash:
+            return ("Trash", "trash")
+        case .delete:
+            return ("Delete", "trash.slash")
         }
     }
 }

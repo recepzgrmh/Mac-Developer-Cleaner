@@ -15,13 +15,15 @@ let package = Package(
             name: "DevReclaim",
             dependencies: [],
             path: "DevReclaim",
-            exclude: ["Tests"],
+            exclude: ["Tests", "Info.plist"],
             sources: [
                 "App",
                 "Core",
                 "UI",
-                "Models",
-                "Resources"
+                "Models"
+            ],
+            resources: [
+                .process("Resources")
             ]
         ),
         .testTarget(

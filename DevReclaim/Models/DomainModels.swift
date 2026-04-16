@@ -12,6 +12,7 @@ enum DetectionMethod: String, Codable {
 enum ExecutionMode: String, Codable {
     case native
     case trash
+    case delete
 }
 
 /// Strategy used to calculate the size of a target during dry-run.
@@ -51,6 +52,8 @@ enum ScanStatus: String, Codable, Equatable {
     case discovered
     case calculating
     case ready
+    case timedOut
+    case failed
 }
 
 // MARK: - Preset Model
@@ -78,7 +81,7 @@ struct Preset: Codable, Identifiable, Equatable {
 // MARK: - Scanning Data
 
 /// A specific location on disk that matches a preset and is a candidate for reclamation.
-struct ScanTarget: Identifiable, Equatable {
+struct ScanTarget: Identifiable, Equatable, Codable {
     let id: UUID
     let url: URL
     let matchingPresetId: String?
@@ -86,19 +89,96 @@ struct ScanTarget: Identifiable, Equatable {
     let projectURL: URL?
     var allocatedSizeInBytes: Int64
     var status: ScanStatus
+    var lastAccessDate: Date?
+    var lastMeasuredAt: Date?
+    var isSizeEstimate: Bool
 
-    init(id: UUID = UUID(), url: URL, matchingPresetId: String?, projectURL: URL? = nil, allocatedSizeInBytes: Int64 = 0, status: ScanStatus = .unscanned) {
+    init(
+        id: UUID = UUID(),
+        url: URL,
+        matchingPresetId: String?,
+        projectURL: URL? = nil,
+        allocatedSizeInBytes: Int64 = 0,
+        status: ScanStatus = .unscanned,
+        lastAccessDate: Date? = nil,
+        lastMeasuredAt: Date? = nil,
+        isSizeEstimate: Bool = false
+    ) {
         self.id = id
         self.url = url
         self.matchingPresetId = matchingPresetId
         self.projectURL = projectURL
         self.allocatedSizeInBytes = allocatedSizeInBytes
         self.status = status
+        self.lastAccessDate = lastAccessDate
+        self.lastMeasuredAt = lastMeasuredAt
+        self.isSizeEstimate = isSizeEstimate
     }
     
     static func == (lhs: ScanTarget, rhs: ScanTarget) -> Bool {
         lhs.id == rhs.id
     }
+}
+
+extension ScanTarget {
+    /// Stable identity that uniquely distinguishes identical paths matched by different presets.
+    var identityKey: String {
+        "\(matchingPresetId ?? "_")::\(url.path)"
+    }
+
+    var relativeLastAccessDescription: String? {
+        guard let lastAccessDate else { return nil }
+        return RelativeDateTimeFormatter().localizedString(for: lastAccessDate, relativeTo: Date())
+    }
+}
+
+/// A single file/folder sample shown to the user before reclaiming space.
+struct DryRunPreviewItem: Identifiable, Equatable, Codable {
+    let path: String
+    let allocatedSizeInBytes: Int64
+    let isDirectory: Bool
+
+    var id: String { path }
+}
+
+/// Summarizes what would be deleted for a specific target.
+struct DryRunPreview: Equatable, Codable {
+    let targetPath: String
+    let generatedAt: Date
+    let totalItems: Int
+    let estimatedTotalBytes: Int64
+    let isTruncated: Bool
+    let items: [DryRunPreviewItem]
+}
+
+/// Represents a large file candidate (installer, partial download, or generic large file).
+struct LargeFileHit: Identifiable, Equatable, Codable {
+    let path: String
+    let allocatedSizeInBytes: Int64
+    let lastAccessDate: Date?
+    let reason: String
+
+    var id: String { path }
+}
+
+/// Aggregated project artifact view model built from scan targets.
+struct ProjectBreakdownGroup: Identifiable, Equatable {
+    let projectURL: URL
+    let name: String
+    let targets: [ScanTarget]
+    let totalBytes: Int64
+
+    var id: String { projectURL.path }
+}
+
+/// Persisted snapshot to provide instant results on app startup.
+struct ScanCacheSnapshot: Codable {
+    let savedAt: Date
+    let scanTargets: [ScanTarget]
+    let largeFileHits: [LargeFileHit]
+    let skippedExcludedCount: Int
+    let timedOutTargetCount: Int
+    let warnings: [String]
 }
 
 // MARK: - Auditing Data

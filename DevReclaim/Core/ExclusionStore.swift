@@ -10,17 +10,20 @@ class ExclusionStore {
     init() { load() }
 
     func exclude(_ url: URL) {
-        excludedPaths.insert(url.path)
+        excludedPaths.insert(normalize(url))
         save()
     }
 
     func unexclude(_ url: URL) {
-        excludedPaths.remove(url.path)
+        excludedPaths.remove(normalize(url))
         save()
     }
 
     func isExcluded(_ url: URL) -> Bool {
-        excludedPaths.contains(url.path)
+        let candidate = normalize(url)
+        return excludedPaths.contains { excluded in
+            candidate == excluded || candidate.hasPrefix(excluded + "/")
+        }
     }
 
     private func save() {
@@ -28,6 +31,15 @@ class ExclusionStore {
     }
 
     private func load() {
-        excludedPaths = Set(UserDefaults.standard.stringArray(forKey: defaultsKey) ?? [])
+        let loaded = UserDefaults.standard.stringArray(forKey: defaultsKey) ?? []
+        excludedPaths = Set(loaded.map { normalize(path: $0) })
+    }
+
+    private func normalize(_ url: URL) -> String {
+        url.standardizedFileURL.path
+    }
+
+    private func normalize(path: String) -> String {
+        URL(fileURLWithPath: path).standardizedFileURL.path
     }
 }

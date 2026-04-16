@@ -4,19 +4,43 @@ struct OverviewDashboardView: View {
     let scannerVM: ScannerViewModel
 
     var body: some View {
-        ScrollView {
+        ScrollView(showsIndicators: true) {
             VStack(alignment: .leading, spacing: 30) {
-                Text("Storage Overview")
-                    .font(.largeTitle.bold())
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Storage Overview")
+                        .font(.largeTitle.bold())
 
-                // Quick Stats — adaptive so cards never get squashed on narrow windows
+                    HStack(spacing: 10) {
+                        if let subtitle = scanSubtitle {
+                            Label(subtitle, systemImage: scannerVM.isUsingCachedSnapshot ? "clock.arrow.circlepath" : "checkmark.circle")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        if scannerVM.timedOutTargetCount > 0 {
+                            Label("\(scannerVM.timedOutTargetCount) timeout", systemImage: "clock.badge.exclamationmark")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                        }
+                    }
+                }
+
                 LazyVGrid(
                     columns: [GridItem(.adaptive(minimum: 130, maximum: 200))],
                     spacing: 16
                 ) {
                     StatCard(
+                        title: "Disk Health",
+                        value: "\(scannerVM.healthScore)/100",
+                        subtitle: scannerVM.healthLabel,
+                        icon: "heart.text.square.fill",
+                        color: healthColor
+                    )
+
+                    StatCard(
                         title: "Reclaimable",
                         value: ByteCountFormatter.string(fromByteCount: scannerVM.totalReclaimableBytes, countStyle: .file),
+                        subtitle: "Total opportunity",
                         icon: "leaf.fill",
                         color: .green
                     )
@@ -24,6 +48,7 @@ struct OverviewDashboardView: View {
                     StatCard(
                         title: "Found Targets",
                         value: "\(scannerVM.scanTargets.count)",
+                        subtitle: "Caches and artifacts",
                         icon: "target",
                         color: .blue
                     )
@@ -31,19 +56,35 @@ struct OverviewDashboardView: View {
                     StatCard(
                         title: "Free Disk Space",
                         value: freeDiskSpaceString,
+                        subtitle: "Current available",
                         icon: "internaldrive",
-                        color: .purple
+                        color: .indigo
                     )
 
                     StatCard(
                         title: "Excluded Paths",
                         value: "\(scannerVM.exclusionStore.excludedPaths.count)",
+                        subtitle: "Always skipped",
                         icon: "eye.slash",
                         color: .orange
                     )
                 }
 
-                // Per-project summary (if any project artifacts scanned)
+                if !scannerVM.largeFileHits.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Large File Hunter")
+                            .font(.title2.bold())
+
+                        ForEach(scannerVM.largeFileHits.prefix(10)) { hit in
+                            LargeFileRow(hit: hit)
+                        }
+
+                        Text("Installer files and partial downloads are prioritized automatically.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
                 if !scannerVM.projectBreakdown.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Top Projects by Artifact Size")
@@ -59,16 +100,23 @@ struct OverviewDashboardView: View {
                     }
                 }
 
-                // Tips / empty state
                 VStack(alignment: .leading, spacing: 15) {
                     Text("Optimization Tips")
                         .font(.title2.bold())
 
                     InfoBox(
-                        title: "Freeing up space",
-                        message: "Running a full scan of global caches often identifies gigabytes of redundant data from Xcode and package managers.",
+                        title: "Realtime analysis enabled",
+                        message: "Cached results load instantly, then DevReclaim refreshes in the background every few minutes.",
                         severity: .info
                     )
+
+                    if let warning = scannerVM.scanWarnings.first {
+                        InfoBox(
+                            title: "Scan note",
+                            message: warning,
+                            severity: .warning
+                        )
+                    }
 
                     if scannerVM.scanTargets.isEmpty {
                         VStack(spacing: 12) {
@@ -77,7 +125,7 @@ struct OverviewDashboardView: View {
                                 .foregroundColor(.secondary)
                             Text("No targets identified yet")
                                 .font(.headline)
-                            Text("Select a category from the sidebar and press ⌘R to scan.")
+                            Text("DevReclaim scans automatically. You can still press ⌘R to force a fresh pass.")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -87,8 +135,32 @@ struct OverviewDashboardView: View {
                 }
             }
             .padding(30)
+            .padding(.bottom, 56)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .frame(minWidth: 500)
+    }
+
+    private var healthColor: Color {
+        switch scannerVM.healthScore {
+        case 80...: return .green
+        case 60..<80: return .yellow
+        case 40..<60: return .orange
+        default: return .red
+        }
+    }
+
+    private var scanSubtitle: String? {
+        let formatter = RelativeDateTimeFormatter()
+        if let lastScanDate = scannerVM.lastScanDate {
+            let value = formatter.localizedString(for: lastScanDate, relativeTo: Date())
+            if scannerVM.isUsingCachedSnapshot {
+                return "Showing cached snapshot from \(value)"
+            }
+            return "Updated \(value)"
+        }
+        return nil
     }
 
     private var freeDiskSpaceString: String {
@@ -98,6 +170,41 @@ struct OverviewDashboardView: View {
             return "—"
         }
         return ByteCountFormatter.string(fromByteCount: capacity, countStyle: .file)
+    }
+}
+
+// MARK: - Large File Row
+
+struct LargeFileRow: View {
+    let hit: LargeFileHit
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text(ByteCountFormatter.string(fromByteCount: hit.allocatedSizeInBytes, countStyle: .file))
+                    .font(.caption.monospacedDigit().bold())
+                    .foregroundColor(.primary)
+
+                Text(hit.reason)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                if let lastAccessDate = hit.lastAccessDate {
+                    Text(RelativeDateTimeFormatter().localizedString(for: lastAccessDate, relativeTo: Date()))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Text(hit.path)
+                .font(.caption.monospaced())
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+        .padding(.vertical, 4)
     }
 }
 
@@ -145,6 +252,7 @@ struct ProjectSummaryRow: View {
 struct StatCard: View {
     let title: String
     let value: String
+    let subtitle: String
     let icon: String
     let color: Color
 
@@ -167,6 +275,11 @@ struct StatCard: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .textCase(.uppercase)
+
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
             }
         }
         .padding()

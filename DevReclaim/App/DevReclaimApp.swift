@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -6,15 +7,37 @@ struct DevReclaimApp: App {
     @State private var scannerVM = ScannerViewModel()
     @State private var executionVM = ExecutionViewModel()
 
+    init() {
+        // Ensure DevReclaim behaves as a regular macOS app and appears in Dock.
+        NSApplication.shared.setActivationPolicy(.regular)
+
+        // Ensure Dock icon is always available when running as a Swift package.
+        if let image = NSImage(named: NSImage.Name("AppDockIcon")) ??
+            NSImage(named: NSImage.Name("AppIcon")) {
+            NSApplication.shared.applicationIconImage = image
+        } else if let url = Bundle.module.url(forResource: "AppDockIcon", withExtension: "png"),
+                  let image = NSImage(contentsOf: url) {
+            NSApplication.shared.applicationIconImage = image
+        } else if let url = Bundle.main.url(forResource: "AppDockIcon", withExtension: "png"),
+                  let image = NSImage(contentsOf: url) {
+            NSApplication.shared.applicationIconImage = image
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             MainSplitView(scannerVM: scannerVM, executionVM: executionVM)
                 .frame(minWidth: 900, minHeight: 600)
         }
         .windowStyle(.titleBar)
-        .windowToolbarStyle(.unifiedCompact)
+        .windowToolbarStyle(.automatic)
 
-        MenuBarExtra("DevReclaim", systemImage: "internaldrive.badge.checkmark") {
+        Settings {
+            SettingsView(scannerVM: scannerVM)
+                .frame(minWidth: 560, minHeight: 420)
+        }
+
+        MenuBarExtra("DevReclaim", systemImage: "internaldrive.fill") {
             MenuBarSummaryView(scannerVM: scannerVM)
         }
     }
@@ -28,7 +51,7 @@ struct MenuBarSummaryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Image(systemName: "internaldrive.badge.checkmark")
+                Image(systemName: "internaldrive.fill")
                     .foregroundColor(.accentColor)
                 Text("DevReclaim")
                     .font(.headline)

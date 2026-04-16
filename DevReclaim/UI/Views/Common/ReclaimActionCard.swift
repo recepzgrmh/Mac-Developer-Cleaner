@@ -4,17 +4,19 @@ struct ReclaimActionCard: View {
     let target: ScanTarget
     let preset: Preset
     let executionVM: ExecutionViewModel
+    let onReclaimRequested: () -> Void
+    let isPreparingConfirmation: Bool
     
     var body: some View {
         VStack(spacing: 12) {
             Button(action: {
-                Task { await executionVM.execute(target: target, preset: preset) }
+                onReclaimRequested()
             }) {
                 HStack {
-                    if isExecuting {
+                    if isBusy {
                         ProgressView().controlSize(.small).padding(.trailing, 4)
                     }
-                    Text("Reclaim Space")
+                    Text(isPreparingConfirmation ? "Preparing Delete Preview…" : "Delete Permanently")
                         .font(.headline)
                 }
                 .frame(maxWidth: .infinity)
@@ -23,7 +25,7 @@ struct ReclaimActionCard: View {
             .buttonStyle(.borderedProminent)
             .tint(reclaimTint)
             .controlSize(.large)
-            .disabled(isExecuting)
+            .disabled(isBusy)
             
             if !executionVM.userFacingStatus.isEmpty {
                 HStack {
@@ -39,19 +41,18 @@ struct ReclaimActionCard: View {
         }
     }
     
-    private var isExecuting: Bool {
-        executionVM.state == .runningNative || executionVM.state == .runningTrash
+    private var isBusy: Bool {
+        executionVM.state == .runningDelete || isPreparingConfirmation
     }
     
     private var reclaimTint: Color {
-        preset.riskLevel == .safe ? .accentColor : .red
+        .red
     }
     
     private var statusIcon: String {
         switch executionVM.state {
         case .completed: return "checkmark.circle.fill"
         case .failed: return "xmark.circle.fill"
-        case .awaitingTrashConsent: return "questionmark.circle.fill"
         default: return "info.circle"
         }
     }
@@ -60,7 +61,6 @@ struct ReclaimActionCard: View {
         switch executionVM.state {
         case .completed: return .green
         case .failed: return .red
-        case .awaitingTrashConsent: return .orange
         default: return .secondary
         }
     }
