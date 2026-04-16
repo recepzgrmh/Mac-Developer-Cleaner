@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift
+build/
+DerivedData/
+.swiftpm/
+.build/
+*.xcodeproj/
+*.xcworkspace/
+
+# BMad & AI (İsteğe bağlı: Bunları istersen repo'da tutabilirsin ama genelde local context olarak kalır)
+.agent/
+.agents/
+.claude/
+.gemini/
+_bmad/
+_bmad-output/
+
+# Binaries
+*.dmg
+*.app
