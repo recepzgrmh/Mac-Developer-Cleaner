@@ -8,11 +8,15 @@ protocol AuditLoggerProtocol {
 class AuditLogger: AuditLoggerProtocol {
     private let logURL: URL
     
-    init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appDir = appSupport.appendingPathComponent("DevReclaim")
-        try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
-        self.logURL = appDir.appendingPathComponent("audit-log.json")
+    init(logURL: URL? = nil) {
+        if let customURL = logURL {
+            self.logURL = customURL
+        } else {
+            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            let appDir = appSupport.appendingPathComponent("DevReclaim")
+            try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
+            self.logURL = appDir.appendingPathComponent("audit-log.json")
+        }
     }
     
     func logAction(report: ExecutionReport) async throws {

@@ -40,7 +40,7 @@ final class ExecutorTests: XCTestCase {
             nativeCommand: "rm \(testFile.path)",
             fallbackAction: .none
         )
-        let target = ScanTarget(url: testFile, matchingPreset: preset, allocatedSizeInBytes: 100)
+        let target = ScanTarget(url: testFile, matchingPresetId: preset.id, allocatedSizeInBytes: 100)
         
         let report = try await executor.execute(for: target, preset: preset)
         
@@ -68,7 +68,7 @@ final class ExecutorTests: XCTestCase {
             nativeCommand: "non_existent_command_12345",
             fallbackAction: .none
         )
-        let target = ScanTarget(url: tempDir, matchingPreset: preset, allocatedSizeInBytes: 100)
+        let target = ScanTarget(url: tempDir, matchingPresetId: preset.id, allocatedSizeInBytes: 100)
         
         do {
             _ = try await executor.execute(for: target, preset: preset)
@@ -102,7 +102,7 @@ final class ExecutorTests: XCTestCase {
             nativeCommand: nil,
             fallbackAction: .none
         )
-        let target = ScanTarget(url: testFile, matchingPreset: preset, allocatedSizeInBytes: 100)
+        let target = ScanTarget(url: testFile, matchingPresetId: preset.id, allocatedSizeInBytes: 100)
         
         let report = try await executor.execute(for: target, preset: preset)
         
@@ -113,25 +113,24 @@ final class ExecutorTests: XCTestCase {
     }
     
     func testAuditLogger() async throws {
-        let logger = AuditLogger()
+        let logURL = tempDir.appendingPathComponent("audit-log.json")
+        let logger = AuditLogger(logURL: logURL)
+
         let report = ExecutionReport(
             presetId: "test_preset",
             executionMode: .native,
             recoveredBytes: 1024,
             wasSuccess: true
         )
-        
+
         try await logger.logAction(report: report)
-        
+
         // Verify file exists and contains the report
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let logURL = appSupport.appendingPathComponent("DevReclaim/audit-log.json")
-        
         XCTAssertTrue(FileManager.default.fileExists(atPath: logURL.path))
-        
+
         let data = try Data(contentsOf: logURL)
         let reports = try JSONDecoder().decode([ExecutionReport].self, from: data)
-        
+
         XCTAssertEqual(reports.count, 1)
         XCTAssertEqual(reports.first?.presetId, "test_preset")
     }

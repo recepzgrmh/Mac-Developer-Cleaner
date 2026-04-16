@@ -1,4 +1,5 @@
 import XCTest
+@testable import DevReclaim
 
 final class ScannerTests: XCTestCase {
     
@@ -44,8 +45,8 @@ final class ScannerTests: XCTestCase {
         // In tests we should use matchingPreset
         let targets = try await scanner.discoverGlobalTargets(for: preset)
         XCTAssertEqual(targets.count, 1)
-        XCTAssertEqual(targets.first?.url.path, npmDir.path)
-        XCTAssertEqual(targets.first?.matchingPreset?.id, preset.id)
+        XCTAssertEqual(targets.first?.url.resolvingSymlinksInPath().path, npmDir.resolvingSymlinksInPath().path)
+        XCTAssertEqual(targets.first?.matchingPresetId, preset.id)
     }
     
     func testDiscoverProjectTargetsSkipsGit() async throws {
@@ -86,7 +87,7 @@ final class ScannerTests: XCTestCase {
         let targets = try await scanner.discoverProjectTargets(in: projectDir, for: preset)
         
         XCTAssertEqual(targets.count, 1, "Should only find one build directory")
-        XCTAssertEqual(targets.first?.url.path, validBuildDir.path)
+        XCTAssertEqual(targets.first?.url.resolvingSymlinksInPath().path, validBuildDir.resolvingSymlinksInPath().path)
     }
     
     func testCalculateVolume() async throws {

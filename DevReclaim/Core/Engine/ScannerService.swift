@@ -44,7 +44,7 @@ class ScannerService: ScannerServiceProtocol {
         if fileManager.fileExists(atPath: resolvedPath, isDirectory: &isDir) {
             let target = ScanTarget(
                 url: url,
-                matchingPreset: preset,
+                matchingPresetId: preset.id,
                 status: .discovered
             )
             return [target]
@@ -56,7 +56,7 @@ class ScannerService: ScannerServiceProtocol {
     func discoverProjectTargets(in projectURL: URL, for preset: Preset) async throws -> [ScanTarget] {
         guard preset.category == "project_artifact" else { return [] }
         
-        return try await Task.detached(priority: .userInitiated) {
+        return await Task.detached(priority: .userInitiated) {
             var targets: [ScanTarget] = []
             
             // Search for the specific artifact (e.g., "build", "node_modules")
@@ -87,7 +87,7 @@ class ScannerService: ScannerServiceProtocol {
                     // Match found
                     let target = ScanTarget(
                         url: fileURL,
-                        matchingPreset: preset,
+                        matchingPresetId: preset.id,
                         status: .discovered
                     )
                     targets.append(target)
@@ -103,7 +103,7 @@ class ScannerService: ScannerServiceProtocol {
     }
     
     func calculateVolume(for url: URL) async throws -> Int64 {
-        return try await Task.detached(priority: .userInitiated) {
+        return await Task.detached(priority: .userInitiated) {
             var totalVolume: Int64 = 0
             
             // Apple recommendation: totalFileAllocatedSizeKey for actual disk space.

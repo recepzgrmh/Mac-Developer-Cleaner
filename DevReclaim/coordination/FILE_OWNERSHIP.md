@@ -31,22 +31,25 @@
 | state | owner | file path | updated_at | note |
 |---|---|---|---|---|
 | [x] | gemini | Models/DomainModels.swift | 2026-04-16 10:15 | completed Wave 0 |
-| [x] | gemini | Core/Engine/ScannerService.swift | 2026-04-16 11:45 | completed Wave 1 (S2.1) |
+| [x] | gemini | Core/Engine/ScannerService.swift | 2026-04-16 18:05 | Wave 1 Refined (Async/Try fix) |
 | [x] | gemini | Core/Engine/PresetLoader.swift | 2026-04-16 11:20 | completed Wave 1 (S1.2) |
-| [ ] | - | Core/Executors/NativeCommandExecutor.swift | - | Wave 1 (S3.1) Agent B |
-| [ ] | - | Core/Engine/AuditLogger.swift | - | Wave 1 (S3.3) Agent B |
-| [ ] | - | App/DevReclaimApp.swift | - | Wave 1 (S4.1) Agent C |
-| [ ] | - | UI/MainSplitView.swift | - | Wave 1 (S4.2) Agent C |
-| [x] | gemini | Tests/ScannerTests.swift | 2026-04-16 11:55 | completed Wave 2 (S2.2) |
-| [x] | gemini | UI/Views/Common/InfoBox.swift | 2026-04-16 12:05 | completed Wave 2 (S4.9) |
-| [ ] | - | Core/Executors/TrashExecutor.swift | - | Wave 2 (S3.2) Agent B |
-| [ ] | - | UI/ViewModels/ExecutionViewModel.swift | - | Wave 2 (S4.6) Agent B |
-| [ ] | - | Tests/ExecutorTests.swift | - | Wave 2 (S3.4) Agent B |
-| [ ] | - | UI/Views/SidebarView.swift | - | Wave 2 (S4.3) Agent C |
-| [ ] | - | UI/ViewModels/ScannerViewModel.swift | - | Wave 2 (S4.4) Agent C |
-| [ ] | - | UI/Views/DetailPanelView.swift | - | Wave 3 (S4.7) Agent B |
-| [ ] | - | UI/Views/PresetListView.swift | - | Wave 3 (S4.5) Agent C |
-| [ ] | - | UI/Views/HistoryView.swift | - | Wave 3 (S4.8) Agent C |
+| [x] | gemini | Core/Executors/NativeCommandExecutor.swift | 2026-04-16 18:00 | Wave 1 (S3.1) |
+| [x] | gemini | Core/Engine/AuditLogger.swift | 2026-04-16 18:10 | Wave 1 (DI for testing added) |
+| [x] | gemini | App/DevReclaimApp.swift | 2026-04-16 18:00 | Wave 1 (Premium Window Style) |
+| [x] | gemini | UI/MainSplitView.swift | 2026-04-16 18:00 | Wave 1 (Refactored to Modular) |
+| [x] | gemini | Tests/ScannerTests.swift | 2026-04-16 18:11 | Wave 2 (Symlink & Module fixes) |
+| [x] | gemini | UI/Views/Common/InfoBox.swift | 2026-04-16 18:00 | Wave 2 (Refined UI) |
+| [x] | gemini | Core/Executors/TrashExecutor.swift | 2026-04-16 18:00 | Wave 2 (S3.2) |
+| [x] | gemini | UI/ViewModels/ExecutionViewModel.swift | 2026-04-16 18:00 | Wave 2 (New ExecutionStates) |
+| [x] | gemini | Tests/ExecutorTests.swift | 2026-04-16 18:11 | Wave 2 (Audit DI fix) |
+| [x] | gemini | UI/Views/SidebarView.swift | 2026-04-16 18:00 | Wave 2 (Categorized sections) |
+| [x] | gemini | UI/ViewModels/ScannerViewModel.swift | 2026-04-16 18:00 | Wave 2 (New metrics & phases) |
+| [x] | gemini | UI/Views/HistoryView.swift | 2026-04-16 18:00 | Wave 3 (Native Table View) |
+| [x] | gemini | UI/Views/Common/OverviewDashboardView.swift | 2026-04-16 18:00 | New Dashboard |
+| [x] | gemini | UI/Views/Common/PresetRowView.swift | 2026-04-16 18:00 | New Modular Row View |
+| [x] | gemini | UI/Views/Common/RiskBadge.swift | 2026-04-16 18:05 | Extracted Global Component |
+| [x] | gemini | UI/Views/Common/EmptySelectionView.swift | 2026-04-16 18:05 | New Empty State View |
+| [x] | gemini | UI/Views/Common/ReclaimActionCard.swift | 2026-04-16 18:05 | Modular Action UI |
 
 ---
 
@@ -55,16 +58,6 @@
 | state | owner | file path | updated_at | note |
 |---|---|---|---|---|
 | [>] | coordinator | DevReclaim.xcodeproj/project.pbxproj | - | Locked |
-| [>] | coordinator | Package.swift | - | Locked |
-| [>] | coordinator | DevReclaim/coordination/FILE_OWNERSHIP.md | - | Source of Truth |
+| [x] | gemini | Package.swift | 2026-04-16 18:10 | Refined targets |
+| [>] | coordinator | DevReclaim/coordination/FILE_OWNERSHIP.md | 2026-04-16 18:15 | Sync with current code |
 | [>] | coordinator | DevReclaim/coordination/AGENT_PROTOCOL.md | - | Process Guardrail |
-
----
-
-## Claim Example
-
-```
-Before:  | [ ] | - | Models/DomainModels.swift | - | - |
-Claimed: | [>] | cursor | Models/DomainModels.swift | 2026-04-16 17:02 | implementing |
-Done:    | [x] | cursor | Models/DomainModels.swift | 2026-04-16 17:30 | completed |
-```

@@ -4,40 +4,44 @@ struct HistoryView: View {
     @State private var vm = HistoryViewModel()
     
     var body: some View {
-        List {
-            if vm.reports.isEmpty && !vm.isFetching {
-                ContentUnavailableView("No History", systemImage: "clock", description: Text("Reclaim actions will appear here."))
+        VStack(spacing: 0) {
+            if vm.isFetching {
+                ProgressView("Fetching history...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if vm.reports.isEmpty {
+                ContentUnavailableView(
+                    "No History Found",
+                    systemImage: "clock.arrow.circlepath",
+                    description: Text("Items will appear here after you reclaim some space.")
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ForEach(vm.reports) { report in
-                    VStack(alignment: .leading, spacing: 5) {
+                Table(vm.reports) {
+                    TableColumn("Preset") { report in
                         HStack {
+                            Image(systemName: report.wasSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundColor(report.wasSuccess ? .green : .red)
                             Text(report.presetId)
                                 .font(.headline)
-                            Spacer()
-                            Text("\(report.recoveredBytes / 1_000_000) MB")
-                                .font(.title3)
-                                .bold()
-                        }
-                        
-                        HStack {
-                            Label(report.executionMode.rawValue.capitalized, 
-                                  systemImage: report.executionMode == .native ? "terminal" : "trash")
-                            
-                            Spacer()
-                            
-                            Text(report.timestamp, style: .date)
-                            Text(report.timestamp, style: .time)
-                        }
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        
-                        if !report.wasSuccess, let error = report.errorMessage {
-                            Text(error)
-                                .font(.caption2)
-                                .foregroundColor(.red)
                         }
                     }
-                    .padding(.vertical, 4)
+                    
+                    TableColumn("Method") { report in
+                        Label(report.executionMode.rawValue.capitalized, 
+                              systemImage: report.executionMode == .native ? "terminal" : "trash")
+                            .font(.subheadline)
+                    }
+                    
+                    TableColumn("Recovered") { report in
+                        Text(ByteCountFormatter.string(fromByteCount: report.recoveredBytes, countStyle: .file))
+                            .font(.system(.subheadline, design: .monospaced))
+                    }
+                    
+                    TableColumn("Timestamp") { report in
+                        Text(report.timestamp, style: .date)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }

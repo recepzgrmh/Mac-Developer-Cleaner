@@ -81,14 +81,14 @@ struct Preset: Codable, Identifiable, Equatable {
 struct ScanTarget: Identifiable, Equatable {
     let id: UUID
     let url: URL
-    let matchingPreset: Preset?
+    let matchingPresetId: String?
     var allocatedSizeInBytes: Int64
     var status: ScanStatus
     
-    init(id: UUID = UUID(), url: URL, matchingPreset: Preset?, allocatedSizeInBytes: Int64 = 0, status: ScanStatus = .unscanned) {
+    init(id: UUID = UUID(), url: URL, matchingPresetId: String?, allocatedSizeInBytes: Int64 = 0, status: ScanStatus = .unscanned) {
         self.id = id
         self.url = url
-        self.matchingPreset = matchingPreset
+        self.matchingPresetId = matchingPresetId
         self.allocatedSizeInBytes = allocatedSizeInBytes
         self.status = status
     }

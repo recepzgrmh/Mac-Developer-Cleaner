@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/app_icon.png" width="128" height="128" alt="Mac-Developer-Cleaner Logo">
+  <img src="assets/app_icon.png" width="128" height="128" alt="DevReclaim Logo">
 </p>
 
-# 🚀 Mac-Developer-Cleaner
+# 🚀 DevReclaim
 
 **The lightweight, native macOS disk cleaner built specifically for developers.**
 
@@ -10,26 +10,27 @@
 [![macOS](https://img.shields.io/badge/macOS-14.0+-blue.svg)](https://apple.com/macos)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Most "Mac Cleaners" are bloated, slow, and don't understand developer workflows. **Mac-Developer-Cleaner** is different. It's built with pure SwiftUI, has zero dependencies, and understands the difference between a "cache" and your "source code."
+Most "Mac Cleaners" are bloated, slow, and don't understand developer workflows. **DevReclaim** is different. It's built with pure SwiftUI, has zero dependencies, and understands the difference between a "cache" and your "source code."
 
 ---
 
 ## ✨ Key Features
 
-- **🚀 Native Performance:** Built with SwiftUI. No Electron, no WebViews. Tiny footprint (<15MB).
+- **🚀 Premium Native Performance:** Refactored into a modular, card-based architecture. No Electron, no WebViews. Tiny footprint (<15MB).
 - **🛡️ Safety First:** 
   - **.git Boundary:** Never scans or touches your repository source code.
   - **Native Cleanup:** Uses tools like `npm cache clean` or `flutter clean` when available.
   - **Trash Fallback:** If a command fails, it asks to move files to the Trash. Never deletes silently.
 - **📦 Smart Presets:** Pre-configured paths for **npm, Xcode, CocoaPods, Gradle, Flutter, and more.**
-- **📜 Audit Logs:** Keep track of every MB reclaimed in a local history log.
+- **📊 Overview Dashboard:** Visual metrics of total reclaimable space and found targets.
+- **📜 Audit Logs:** Keep track of every MB reclaimed in a structured history table.
 
 ## 📸 Screenshots
 *(Tip: Add your app screenshots here to get more stars!)*
 <table>
   <tr>
-    <td><img src="https://via.placeholder.com/400x250?text=Sidebar+Navigation" width="400"></td>
-    <td><img src="https://via.placeholder.com/400x250?text=Scan+Results" width="400"></td>
+    <td><img src="https://via.placeholder.com/400x250?text=Modular+Sidebar" width="400"></td>
+    <td><img src="https://via.placeholder.com/400x250?text=Card-based+Detail+Pane" width="400"></td>
   </tr>
 </table>
 
@@ -46,8 +47,11 @@ Most "Mac Cleaners" are bloated, slow, and don't understand developer workflows.
 2. Open `Package.swift` in Xcode 15+.
 3. Build and Run (`Cmd + R`).
 
-### Option 2: Release
-Check the [Releases](https://github.com/YOUR_USERNAME/DevReclaim/releases) page for the latest `.dmg`.
+### Option 2: Release Packaging
+To create a release DMG, run:
+```bash
+bash scripts/package.sh
+```
 
 ## 🤝 Contributing
 Contributions are welcome! If you have a preset for a tool we don't support yet, please open a PR.

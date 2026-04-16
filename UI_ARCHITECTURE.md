@@ -1,45 +1,51 @@
 # DevReclaim: UI Architecture (SwiftUI)
 
 ## 🎨 Design Philosophy
-DevReclaim follows a **Native-First** approach, adhering strictly to macOS Human Interface Guidelines (HIG). The goal is to provide a tool that feels like a part of the OS, utilizing standard system components and patterns.
+DevReclaim adheres to a **Premium Native-First** philosophy. We follow the macOS Human Interface Guidelines (HIG) to ensure the tool feels like a first-class citizen of the OS. Key principles include:
+- **Clarity:** Important actions (Reclaim) and risks (Risk Levels) are visually distinct.
+- **Feedback:** Real-time progress indicators during scanning and execution.
+- **Safety:** Destructive actions require confirmation and provide clear explanations of what will happen.
 
-## 🏗 Main Layout: 3-Pane Navigation
-The application is built around the `NavigationSplitView`, which provides a familiar macOS 3-pane experience:
+## 🏗 Main Layout: Modular 3-Pane Navigation
+The application utilizes `NavigationSplitView` to provide a standard macOS 3-pane experience, now refactored for better maintainability:
 
 1. **Sidebar (Primary):** `SidebarView`
-   - Navigation categories: Overview, Global Caches, Local Projects, History.
-   - Built with `List` and `NavigationLink`.
-   - Uses `SidebarItem` enum for type-safe routing.
+   - **Workspace Section:** Overview, Global Caches, Local Projects.
+   - **Activity Section:** History.
+   - Organized into logical sections for better focus.
 
 2. **Content (Secondary):** 
-   - Displays a list of scan results based on the sidebar selection.
-   - For Global Caches: Lists presets (e.g., npm, Xcode, CocoaPods).
-   - For Local Projects: Lists discovered project-level artifacts.
-   - For History: `HistoryView` with chronological reports.
+   - **Overview Dashboard:** `OverviewDashboardView` provides high-level metrics (Total reclaimable, found targets).
+   - **Preset List:** Displays a filtered list of presets based on sidebar selection, using `PresetRowView` for consistent metadata display.
+   - **History:** `HistoryView` uses a native macOS `Table` for structured execution reports.
 
-3. **Detail (Detail):**
-   - Triggered when a specific target or preset is selected from the Content pane.
-   - Shows size estimation, risk profile, and the primary "Reclaim" action button.
+3. **Detail (Detail):** `DetailPanelView`
+   - A card-based layout providing decision support:
+     - **Header:** Title, category, and current size.
+     - **Risk & Confidence:** Visual badges for risk level and measurement confidence.
+     - **Action Card:** The primary `ReclaimActionCard` handles the execution flow.
+     - **Technical Details:** A disclosure group for power users needing technical logs.
 
-## 🧠 State & Observation (MVVM)
-The UI uses the modern **Swift 5.9+ @Observable** macro for clean data binding without third-party libraries.
+## 🧠 State Management (MVVM)
+Utilizing **Swift 5.9+ @Observable** for efficient, boilerplate-free state propagation.
 
-- **`ScannerViewModel`:** Manages the lifecycle of scanning tasks. Updates the UI with discovered targets and progress.
-- **`ExecutionViewModel`:** Manages the execution state (`idle`, `running`, `completed`, `error`). Handles the "Native Command vs. Trash Fallback" logic and shows modals/prompts.
-- **`HistoryViewModel`:** Fetches and parses the `audit-log.json` for the History view.
+- **`ScannerViewModel`:** 
+  - Orchestrates `ScannerService`.
+  - Manages discovery phases and volume calculations.
+  - Exposes global metrics like `totalReclaimableBytes`.
+- **`ExecutionViewModel`:** 
+  - Manages the execution lifecycle through distinct states: `.idle`, `.runningNative`, `.awaitingTrashConsent`, `.completed`, `.failed`.
+  - Bridges the UI with `NativeCommandExecutor` and `TrashExecutor`.
+- **`HistoryViewModel`:** 
+  - Interacts with `AuditLogger` to provide a chronological list of actions.
 
-## 🛠 Key UI Components
-- **`MainSplitView`:** The orchestrator that holds the state of the scanner and execution VMs.
-- **`SidebarView`:** Uses standard SF Symbols for consistent iconography.
-- **`HistoryView`:** Utilizes `ContentUnavailableView` for empty states and `List` with custom cell layouts for reports.
-- **Modals:** Triggered via `ExecutionState` to ask for user consent when a native command fails.
+## 🛠 Key Modular Components
+- **`PresetRowView`:** Reusable row for presets in the middle pane.
+- **`RiskBadge`:** Semantic color-coded badge for safety assessment.
+- **`InfoBox`:** Flexible notification component (info, success, warning, error).
+- **`EmptySelectionView`:** Native-feeling placeholder for empty states.
 
-## 🧩 Styling & Assets
-- **SF Symbols:** All icons are native (e.g., `chart.bar.fill`, `archivebox.fill`, `folder.fill`, `clock.fill`).
-- **Typography:** Uses standard Font styles (`.headline`, `.caption`, `.title3`) to ensure accessibility and system integration.
-- **Colors:** Leverages standard semantic colors (`.secondary`, `.red`) for light/dark mode compatibility.
-
-## 🚀 Future UI Improvements (v2)
-- **Overview Dashboard:** A visual breakdown of disk usage (Charts).
-- **Onboarding Flow:** Explaining FDA (Full Disk Access) and least-privilege principles to new users.
-- **Advanced Filtering:** Sorting history and scan results by size or date.
+## 🧩 Styling & System Integration
+- **SF Symbols:** Carefully chosen semantically correct icons (e.g., `internaldrive`, `archivebox`, `hammer`).
+- **Typography:** Uses dynamic type styles (`.largeTitle`, `.headline`, `.caption`) for accessibility.
+- **Window Management:** Uses `.unifiedCompact` toolbar style and defined minimum sizes for a stable window experience.
