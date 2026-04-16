@@ -84,10 +84,12 @@ class ScannerService: ScannerServiceProtocol {
                 }
                 
                 if isDirectory && fileURL.lastPathComponent == artifactName {
-                    // Match found
+                    // Match found — record the containing project directory for per-project breakdown.
+                    let projectURL = fileURL.deletingLastPathComponent()
                     let target = ScanTarget(
                         url: fileURL,
                         matchingPresetId: preset.id,
+                        projectURL: projectURL,
                         status: .discovered
                     )
                     targets.append(target)

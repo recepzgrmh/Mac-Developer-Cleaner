@@ -1,56 +1,63 @@
 import SwiftUI
 
 struct MainSplitView: View {
-    @State private var scannerVM = ScannerViewModel()
-    @State private var executionVM = ExecutionViewModel()
+    var scannerVM: ScannerViewModel
+    var executionVM: ExecutionViewModel
     @State private var selectedSidebarItem: SidebarItem? = .overview
     @State private var selectedPresetId: String?
-    
+
     var body: some View {
         NavigationSplitView {
             SidebarView(selection: $selectedSidebarItem)
         } content: {
-            Group {
-                switch selectedSidebarItem {
-                case .overview, .none:
-                    OverviewDashboardView(scannerVM: scannerVM)
-                case .globalPresets:
-                    List(scannerVM.presets.filter { $0.category == "global_cache" }, selection: $selectedPresetId) { preset in
-                        PresetRowView(
-                            preset: preset,
-                            target: scannerVM.scanTargets.first(where: { $0.matchingPresetId == preset.id }),
-                            isScanning: scannerVM.isScanning
-                        )
+            VStack(spacing: 0) {
+                // Permission warning banner
+                if let warning = scannerVM.permissionWarning {
+                    PermissionBannerView(message: warning, actionTitle: "Open Settings") {
+                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
                     }
-                case .localProjects:
-                    List(scannerVM.presets.filter { $0.category == "project_artifact" }, selection: $selectedPresetId) { preset in
-                        PresetRowView(
-                            preset: preset,
-                            target: scannerVM.scanTargets.first(where: { $0.matchingPresetId == preset.id }),
-                            isScanning: scannerVM.isScanning
-                        )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                }
+
+                // Scan progress indicator
+                if scannerVM.isScanning {
+                    ScanProgressBanner(
+                        phase: scannerVM.scanPhase,
+                        currentPath: scannerVM.currentScanningPath,
+                        completed: scannerVM.scanProgressCompleted,
+                        total: scannerVM.scanProgressTotal
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 6)
+                }
+
+                Group {
+                    switch selectedSidebarItem {
+                    case .overview, .none:
+                        OverviewDashboardView(scannerVM: scannerVM)
+                    case .globalPresets:
+                        presetList(category: "global_cache")
+                    case .localProjects:
+                        localProjectsContent
+                    case .history:
+                        HistoryView()
                     }
-                case .history:
-                    HistoryView()
                 }
             }
             .navigationTitle(selectedSidebarItem?.rawValue ?? "DevReclaim")
             .toolbar {
                 ToolbarItemGroup {
                     if selectedSidebarItem == .globalPresets || selectedSidebarItem == .localProjects {
-                        Button(action: {
-                            Task {
-                                if let selectedPresetId = selectedPresetId,
-                                   let preset = scannerVM.presets.first(where: { $0.id == selectedPresetId }) {
-                                    await scannerVM.scan(preset: preset)
-                                } else {
-                                    await scannerVM.scanAll()
-                                }
-                            }
-                        }) {
-                            Label("Scan Now", systemImage: "play.fill")
+                        Button(action: triggerScan) {
+                            Label(
+                                scannerVM.isScanning ? "Scanning…" : "Scan Now",
+                                systemImage: scannerVM.isScanning ? "arrow.triangle.2.circlepath" : "play.fill"
+                            )
                         }
                         .disabled(scannerVM.isScanning)
+                        .keyboardShortcut("r", modifiers: .command)
+                        .help("Scan selected preset or all presets (⌘R)")
                     }
                 }
             }
@@ -66,19 +73,155 @@ struct MainSplitView: View {
             scannerVM.loadPresets()
         }
     }
+
+    // MARK: - Helpers
+
+    private func triggerScan() {
+        Task {
+            if let id = selectedPresetId,
+               let preset = scannerVM.presets.first(where: { $0.id == id }) {
+                await scannerVM.scan(preset: preset)
+            } else {
+                await scannerVM.scanAll()
+            }
+        }
+    }
+
+    private func presetList(category: String) -> some View {
+        List(
+            scannerVM.presets.filter { $0.category == category },
+            selection: $selectedPresetId
+        ) { preset in
+            PresetRowView(
+                preset: preset,
+                target: scannerVM.scanTargets.first(where: { $0.matchingPresetId == preset.id }),
+                isScanning: scannerVM.isScanning
+            )
+            .contextMenu {
+                if let target = scannerVM.scanTargets.first(where: { $0.matchingPresetId == preset.id }) {
+                    exclusionContextMenu(for: target)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var localProjectsContent: some View {
+        if scannerVM.projectBreakdown.isEmpty {
+            presetList(category: "project_artifact")
+        } else {
+            List(selection: $selectedPresetId) {
+                ForEach(scannerVM.projectBreakdown, id: \.projectURL) { group in
+                    Section {
+                        ForEach(group.targets) { target in
+                            if let preset = scannerVM.presets.first(where: { $0.id == target.matchingPresetId }) {
+                                PresetRowView(
+                                    preset: preset,
+                                    target: target,
+                                    isScanning: scannerVM.isScanning
+                                )
+                                .tag(preset.id)
+                                .contextMenu { exclusionContextMenu(for: target) }
+                            }
+                        }
+                    } header: {
+                        HStack {
+                            Label(group.name, systemImage: "folder.fill")
+                                .font(.subheadline.bold())
+                            Spacer()
+                            Text(ByteCountFormatter.string(fromByteCount: group.totalBytes, countStyle: .file))
+                                .font(.caption.monospacedDigit())
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
+                if scannerVM.skippedExcludedCount > 0 {
+                    Section {
+                        Label("\(scannerVM.skippedExcludedCount) target(s) hidden by exclusion rules.", systemImage: "eye.slash")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func exclusionContextMenu(for target: ScanTarget) -> some View {
+        if scannerVM.exclusionStore.isExcluded(target.url) {
+            Button("Remove from Exclusions") {
+                scannerVM.exclusionStore.unexclude(target.url)
+            }
+        } else {
+            Button("Always Skip This Path", role: .destructive) {
+                scannerVM.exclusionStore.exclude(target.url)
+                scannerVM.scanTargets.removeAll { $0.url == target.url }
+            }
+        }
+    }
 }
+
+// MARK: - Scan Progress Banner
+
+struct ScanProgressBanner: View {
+    let phase: ScannerViewModel.ScanPhase
+    let currentPath: String?
+    let completed: Int
+    let total: Int
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ProgressView().controlSize(.small)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(phaseLabel)
+                    .font(.subheadline.bold())
+                if let path = currentPath {
+                    Text(path)
+                        .font(.caption.monospaced())
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+
+            Spacer()
+
+            if total > 0 {
+                Text("\(completed) / \(total)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.accentColor.opacity(0.07))
+        .cornerRadius(8)
+    }
+
+    private var phaseLabel: String {
+        switch phase {
+        case .discovery: return "Discovering targets…"
+        case .measuring: return "Measuring sizes…"
+        default: return "Scanning…"
+        }
+    }
+}
+
+// MARK: - Detail Panel
 
 struct DetailPanelView: View {
     let preset: Preset?
     let target: ScanTarget?
     let scannerVM: ScannerViewModel
     let executionVM: ExecutionViewModel
-    
+
     var body: some View {
         if let preset = preset {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    
+
                     // A. Header Card
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(alignment: .top) {
@@ -96,27 +239,37 @@ struct DetailPanelView: View {
                                     .foregroundColor(.accentColor)
                             }
                         }
-                        
+
                         Text(preset.explanation)
                             .font(.body)
                             .foregroundColor(.primary.opacity(0.8))
                             .lineSpacing(4)
                     }
                     .padding(.bottom, 8)
-                    
+
                     // B. Decision Support Card (Risk & Confidence)
                     HStack(spacing: 16) {
                         DetailSectionCard(title: "Risk Level", icon: "shield.lefthalf.filled") {
                             RiskBadge(level: preset.riskLevel)
                         }
-                        
+
                         DetailSectionCard(title: "Confidence", icon: "target") {
                             Text(preset.reclaimConfidence.rawValue.capitalized)
                                 .font(.headline)
                         }
+
+                        // Tool availability badge
+                        if let tool = preset.requiresToolInstalled {
+                            let available = scannerVM.toolAvailability[tool] ?? false
+                            DetailSectionCard(title: "Tool", icon: "wrench.and.screwdriver") {
+                                Label(available ? tool : "\(tool) not found", systemImage: available ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundColor(available ? .green : .red)
+                                    .font(.caption.bold())
+                            }
+                        }
                     }
-                    
-                    // C. Safety Explanation / Info
+
+                    // C. Safety info
                     if preset.riskLevel == .safe {
                         InfoBox(
                             title: "Safe to Reclaim",
@@ -130,22 +283,38 @@ struct DetailPanelView: View {
                             severity: .warning
                         )
                     }
-                    
+
                     // D. Scan/Reclaim Action Card
                     VStack(alignment: .leading, spacing: 16) {
                         if let target = target {
                             VStack(alignment: .leading, spacing: 12) {
                                 Label("Found at", systemImage: "folder.fill")
                                     .font(.headline)
-                                
+
                                 Text(target.url.path)
                                     .font(.subheadline.monospaced())
                                     .padding(10)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .background(Color.primary.opacity(0.05))
                                     .cornerRadius(8)
-                                
-                                ReclaimActionCard(target: target, preset: preset, executionVM: executionVM)
+
+                                // Disk freed indicator (post-execution)
+                                if executionVM.freedDiskBytes > 0 {
+                                    HStack {
+                                        Image(systemName: "arrow.up.circle.fill")
+                                            .foregroundColor(.green)
+                                        Text("Disk space freed: \(ByteCountFormatter.string(fromByteCount: executionVM.freedDiskBytes, countStyle: .file))")
+                                            .font(.subheadline.bold())
+                                            .foregroundColor(.green)
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+
+                                ReclaimActionCard(
+                                    target: target,
+                                    preset: preset,
+                                    executionVM: executionVM
+                                )
                             }
                         } else {
                             Button(action: {
@@ -163,13 +332,14 @@ struct DetailPanelView: View {
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
                             .disabled(scannerVM.isScanning)
+                            .keyboardShortcut("r", modifiers: .command)
                         }
                     }
                     .padding()
                     .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
                     .cornerRadius(12)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.1), lineWidth: 1))
-                    
+
                     // E. Technical Details (Disclosure)
                     DisclosureGroup("Technical Details") {
                         VStack(alignment: .leading, spacing: 8) {
@@ -178,7 +348,7 @@ struct DetailPanelView: View {
                             if let cmd = preset.nativeCommand {
                                 DetailRow(label: "Command", value: cmd, monospaced: true)
                             }
-                            
+
                             if !executionVM.technicalDetails.isEmpty {
                                 Divider().padding(.vertical, 4)
                                 Text("Last Execution Log:")
@@ -203,14 +373,10 @@ struct DetailPanelView: View {
                 get: { if case .awaitingTrashConsent = executionVM.state { return true } else { return false } },
                 set: { _ in }
             )) {
-                Button("Cancel", role: .cancel) {
-                    executionVM.reset()
-                }
+                Button("Cancel", role: .cancel) { executionVM.reset() }
                 Button("Yes, Move to Trash", role: .destructive) {
                     if case .awaitingTrashConsent(let target) = executionVM.state {
-                        Task {
-                            await executionVM.executeTrashFallback(target: target, preset: preset)
-                        }
+                        Task { await executionVM.executeTrashFallback(target: target, preset: preset) }
                     }
                 }
             } message: {
@@ -222,11 +388,13 @@ struct DetailPanelView: View {
     }
 }
 
+// MARK: - Detail Row
+
 struct DetailRow: View {
     let label: String
     let value: String
     var monospaced: Bool = false
-    
+
     var body: some View {
         HStack(alignment: .top) {
             Text(label + ":")

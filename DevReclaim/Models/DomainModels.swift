@@ -82,13 +82,16 @@ struct ScanTarget: Identifiable, Equatable {
     let id: UUID
     let url: URL
     let matchingPresetId: String?
+    /// For project_artifact targets: the root project directory that contains this artifact.
+    let projectURL: URL?
     var allocatedSizeInBytes: Int64
     var status: ScanStatus
-    
-    init(id: UUID = UUID(), url: URL, matchingPresetId: String?, allocatedSizeInBytes: Int64 = 0, status: ScanStatus = .unscanned) {
+
+    init(id: UUID = UUID(), url: URL, matchingPresetId: String?, projectURL: URL? = nil, allocatedSizeInBytes: Int64 = 0, status: ScanStatus = .unscanned) {
         self.id = id
         self.url = url
         self.matchingPresetId = matchingPresetId
+        self.projectURL = projectURL
         self.allocatedSizeInBytes = allocatedSizeInBytes
         self.status = status
     }
