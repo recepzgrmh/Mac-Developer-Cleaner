@@ -18,30 +18,41 @@ struct HistoryView: View {
             } else {
                 Table(vm.reports) {
                     TableColumn("Preset") { report in
-                        HStack {
+                        HStack(spacing: 6) {
                             Image(systemName: report.wasSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .foregroundColor(report.wasSuccess ? .green : .red)
+                                .frame(width: 16)
                             Text(report.presetId)
-                                .font(.headline)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
                         }
                     }
-                    
+
                     TableColumn("Method") { report in
-                        Label(report.executionMode.rawValue.capitalized, 
-                              systemImage: report.executionMode == .native ? "terminal" : "trash")
-                            .font(.subheadline)
+                        Label(
+                            report.executionMode == .native ? "Native" : "Trash",
+                            systemImage: report.executionMode == .native ? "terminal" : "trash"
+                        )
+                        .font(.subheadline)
+                        .lineLimit(1)
                     }
-                    
+                    .width(min: 80, ideal: 100, max: 120)
+
                     TableColumn("Recovered") { report in
                         Text(ByteCountFormatter.string(fromByteCount: report.recoveredBytes, countStyle: .file))
                             .font(.system(.subheadline, design: .monospaced))
+                            .lineLimit(1)
                     }
-                    
-                    TableColumn("Timestamp") { report in
+                    .width(min: 80, ideal: 100, max: 120)
+
+                    TableColumn("Date") { report in
                         Text(report.timestamp, style: .date)
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .lineLimit(1)
                     }
+                    .width(min: 80, ideal: 110, max: 140)
                 }
             }
         }

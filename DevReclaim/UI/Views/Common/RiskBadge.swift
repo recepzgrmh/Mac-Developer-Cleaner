@@ -12,8 +12,17 @@ struct RiskBadge: View {
         }
     }
     
+    var displayText: String {
+        switch level {
+        case .safe:        return "Safe"
+        case .usuallySafe: return "Usually Safe"
+        case .reviewFirst: return "Review First"
+        case .neverAuto:   return "Never Auto"
+        }
+    }
+
     var body: some View {
-        Text(level.rawValue.capitalized)
+        Text(displayText)
             .font(.caption2).bold()
             .padding(.horizontal, 8)
             .padding(.vertical, 4)

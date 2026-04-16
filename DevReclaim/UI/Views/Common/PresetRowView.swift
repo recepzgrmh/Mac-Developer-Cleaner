@@ -21,15 +21,18 @@ struct PresetRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(preset.name)
                     .font(.headline)
-                
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
                 Text(preset.explanation)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
-            
-            Spacer()
-            
+            .layoutPriority(1)
+
+            Spacer(minLength: 8)
+
             VStack(alignment: .trailing, spacing: 2) {
                 if isScanning && target == nil {
                     ProgressView()
@@ -46,6 +49,7 @@ struct PresetRowView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            .fixedSize(horizontal: true, vertical: false)
         }
         .padding(.vertical, 4)
     }

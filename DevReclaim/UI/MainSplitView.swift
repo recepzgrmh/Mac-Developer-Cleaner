@@ -125,13 +125,17 @@ struct MainSplitView: View {
                             }
                         }
                     } header: {
-                        HStack {
+                        HStack(spacing: 6) {
                             Label(group.name, systemImage: "folder.fill")
                                 .font(.subheadline.bold())
-                            Spacer()
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .layoutPriority(1)
+                            Spacer(minLength: 4)
                             Text(ByteCountFormatter.string(fromByteCount: group.totalBytes, countStyle: .file))
                                 .font(.caption.monospacedDigit())
                                 .foregroundColor(.secondary)
+                                .fixedSize()
                         }
                     }
                 }
@@ -247,8 +251,8 @@ struct DetailPanelView: View {
                     }
                     .padding(.bottom, 8)
 
-                    // B. Decision Support Card (Risk & Confidence)
-                    HStack(spacing: 16) {
+                    // B. Decision Support Cards — adaptive grid so they never get squashed
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150))], spacing: 12) {
                         DetailSectionCard(title: "Risk Level", icon: "shield.lefthalf.filled") {
                             RiskBadge(level: preset.riskLevel)
                         }
@@ -256,15 +260,17 @@ struct DetailPanelView: View {
                         DetailSectionCard(title: "Confidence", icon: "target") {
                             Text(preset.reclaimConfidence.rawValue.capitalized)
                                 .font(.headline)
+                                .lineLimit(1)
                         }
 
-                        // Tool availability badge
                         if let tool = preset.requiresToolInstalled {
                             let available = scannerVM.toolAvailability[tool] ?? false
                             DetailSectionCard(title: "Tool", icon: "wrench.and.screwdriver") {
-                                Label(available ? tool : "\(tool) not found", systemImage: available ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                Label(available ? tool : "\(tool) not found",
+                                      systemImage: available ? "checkmark.circle.fill" : "xmark.circle.fill")
                                     .foregroundColor(available ? .green : .red)
                                     .font(.caption.bold())
+                                    .lineLimit(1)
                             }
                         }
                     }

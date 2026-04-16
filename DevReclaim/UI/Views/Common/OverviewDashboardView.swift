@@ -9,9 +9,9 @@ struct OverviewDashboardView: View {
                 Text("Storage Overview")
                     .font(.largeTitle.bold())
 
-                // Quick Stats
+                // Quick Stats — adaptive so cards never get squashed on narrow windows
                 LazyVGrid(
-                    columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+                    columns: [GridItem(.adaptive(minimum: 130, maximum: 200))],
                     spacing: 16
                 ) {
                     StatCard(
