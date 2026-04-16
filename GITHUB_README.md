@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/app_icon.png" width="128" height="128" alt="Mac-Developer-Cleaner Logo">
+</p>
+
 # 🚀 Mac-Developer-Cleaner
 
 **The lightweight, native macOS disk cleaner built specifically for developers.**
