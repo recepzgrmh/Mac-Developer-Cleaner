@@ -47,8 +47,10 @@ echo "2) Assembling .app bundle..."
 cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 cp -R "${RESOURCE_BUNDLE_PATH}" "${APP_BUNDLE}/Contents/Resources/"
 cp "${ROOT_DIR}/DevReclaim/Info.plist" "${APP_BUNDLE}/Contents/Info.plist"
+echo -n "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
 chmod +x "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
+# Update Info.plist
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "${APP_BUNDLE}/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${VERSION}" "${APP_BUNDLE}/Contents/Info.plist" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${VERSION}" "${APP_BUNDLE}/Contents/Info.plist"
@@ -68,40 +70,58 @@ cp "${ICONSET_SRC}/icon_512.png" "${ICONSET_TMP}/icon_512x512.png"
 cp "${ICONSET_SRC}/icon_512@2x.png" "${ICONSET_TMP}/icon_512x512@2x.png"
 iconutil -c icns "${ICONSET_TMP}" -o "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
 
-echo "4) Preparing DMG staging..."
+echo "4) Code Signing (Ad-hoc)..."
+# Ensure all files are readable by everyone
+chmod -R a+r "${APP_BUNDLE}"
+chmod +x "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
+# Sign the bundle and all internal components
+codesign --force --deep --sign - "${APP_BUNDLE}"
+
+echo "5) Preparing DMG staging..."
 ln -s /Applications "${STAGING_DIR}/Applications"
 
-echo "5) Creating DMG..."
+echo "6) Creating DMG..."
+# Create a temporary read-write DMG
 hdiutil create -quiet -volname "${APP_NAME}" -srcfolder "${STAGING_DIR}" -ov -format UDRW -fs HFS+ "${TMP_DMG}"
 
+# Mount it to set the layout
 ATTACH_OUTPUT="$(hdiutil attach -readwrite -noverify -noautoopen "${TMP_DMG}")"
 DEVICE="$(echo "${ATTACH_OUTPUT}" | awk '/Apple_HFS|Apple_APFS/ {print $1; exit}')"
 MOUNT_POINT="$(echo "${ATTACH_OUTPUT}" | awk '/\/Volumes\// {print substr($0, index($0, "/Volumes/")); exit}')"
 
 if [[ -n "${MOUNT_POINT}" && -d "${MOUNT_POINT}" ]]; then
-  osascript <<EOF || true
+  echo "Setting DMG layout..."
+  osascript <<EOF
 tell application "Finder"
   tell disk "${APP_NAME}"
     open
-    tell container window
-      set current view to icon view
-      set toolbar visible to false
-      set statusbar visible to false
-      set bounds to {200, 120, 820, 520}
-    end tell
-    tell icon view options of container window
-      set arrangement to not arranged
-      set icon size to 128
-      set text size to 13
-    end tell
-    set position of item "${APP_NAME}.app" of container window to {180, 210}
-    set position of item "Applications" of container window to {460, 210}
-    update without registering applications
-    delay 1
-    close
+    set current view of container window to icon view
+    set toolbar visible of container window to false
+    set statusbar visible of container window to false
+    set the_bounds to {400, 100, 920, 440}
+    set bounds of container window to the_bounds
+    
+    set the_options to icon view options of container window
+    set arrangement of the_options to not arranged
+    set icon size of the_options to 120
+    set text size of the_options to 14
+    
+    set position of item "${APP_NAME}.app" of container window to {160, 150}
+    set position of item "Applications" of container window to {360, 150}
+    
+    # Wait for Finder to write its changes
+    delay 3
+    
+    # Enable autostart
+    set the_mount to "${MOUNT_POINT}"
+    # close container window
   end tell
 end tell
 EOF
+  # Hide the DS_Store if possible
+  sync
+  # Use bless to ensure the window opens automatically
+  bless --folder "${MOUNT_POINT}" --openfolder "${MOUNT_POINT}"
 fi
 
 sync
@@ -109,12 +129,18 @@ if [[ -n "${DEVICE}" ]]; then
   hdiutil detach "${DEVICE}" -quiet || hdiutil detach "${DEVICE}" -force -quiet
 fi
 
+# Convert to compressed DMG
 hdiutil convert -quiet "${TMP_DMG}" -format UDZO -imagekey zlib-level=9 -o "${DMG_PATH}"
 rm -f "${TMP_DMG}"
 rm -rf "${ICONSET_TMP}"
 
-echo "6) Verifying DMG..."
+echo "7) Verifying DMG..."
 hdiutil verify "${DMG_PATH}" > /dev/null
 
 echo "Done: ${DMG_PATH}"
-echo "Build log: ${BUILD_LOG}"
+echo "--------------------------------------------------"
+echo "IMPORTANT: If users still see a 'damaged' error,"
+echo "it is because the app is ad-hoc signed."
+echo "They must run: xattr -cr /Applications/${APP_NAME}.app"
+echo "To avoid this, sign with a Developer ID and notarize."
+echo "--------------------------------------------------"
