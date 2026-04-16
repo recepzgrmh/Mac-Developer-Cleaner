@@ -1,104 +1,125 @@
-<p align="center">
-  <img src="assets/app_icon.png" width="128" height="128" alt="DevReclaim logo" />
-</p>
+<img src="assets/app_icon.png" width="180" alt="DevReclaim app icon" align="left"/>
 
-# DevReclaim
+<div>
+<h3>DevReclaim</h3>
+<p><strong>Native macOS cleaner for developers.</strong><br/>
+Clean Xcode DerivedData, npm/yarn/pnpm caches, CocoaPods leftovers, Gradle artifacts and other build junk safely.</p>
+<a href="https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/latest"><img src="https://img.shields.io/badge/Download%20for-macOS%2014%2B-black?style=for-the-badge&logo=apple" alt="Download for macOS"/></a>
+</div>
 
-**A native macOS disk cleaner for developers.**
+<br/><br/>
 
-DevReclaim helps you reclaim storage safely by cleaning developer junk such as **Xcode DerivedData**, **npm/yarn/pnpm caches**, **CocoaPods artifacts**, **Gradle caches**, and **Flutter/Dart build leftovers**.
+<div align="center">
+<a href="https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases"><img src="https://img.shields.io/github/downloads/recepzgrmh/Mac-Developer-Cleaner/total.svg?style=flat" alt="downloads"/></a>
+<a href="https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/latest"><img src="https://img.shields.io/github/v/release/recepzgrmh/Mac-Developer-Cleaner?style=flat" alt="latest version"/></a>
+<a href="https://github.com/recepzgrmh/Mac-Developer-Cleaner"><img src="https://img.shields.io/badge/platform-macOS%2014%2B-blue.svg?style=flat" alt="platform"/></a>
+<a href="https://swift.org"><img src="https://img.shields.io/badge/swift-5.9%2B-orange.svg?style=flat" alt="swift"/></a>
 
-If you searched for terms like **"macOS developer cleaner"**, **"Xcode cache cleaner"**, **"DerivedData cleaner"**, or **"delete npm cache on Mac"**, this app is built for exactly that workflow.
+<br/>
+<br/>
 
-[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange)](https://swift.org)
-[![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B-blue)](https://www.apple.com/macos)
-[![Release](https://img.shields.io/github/v/release/recepzgrmh/Mac-Developer-Cleaner)](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases)
+<img src=".github/screenshot-main.png" width="920" alt="DevReclaim screenshot"/><br/>
+
+</div>
+
+<hr>
+
+> [!IMPORTANT]
+> DevReclaim is designed for developer environments and follows a safety-first cleanup approach. Review scan results before cleanup, especially on shared machines.
 
 ## Download
 
-- Latest release: [Download from GitHub Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/latest)
-- Current stable (v1.1.2): [DevReclaim v1.1.2](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/tag/v1.1.2)
+Go to [Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases) and download the latest `.dmg`.
 
-## Why DevReclaim
+- Latest stable release: [v1.1.2](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/tag/v1.1.2)
+- Current DMG: `DevReclaim_v1.1.2.dmg`
 
-Most cleaner apps are generic, heavy, and risky. DevReclaim is intentionally focused on developer environments.
+## Major Features
 
-- Native SwiftUI app (no Electron/WebView overhead)
-- Lightweight footprint
-- Safety-first cleanup flow
-- Built specifically for dev tools and build systems
-- Clear audit/history of reclaimed space
+- Clean developer-specific storage bloat on macOS
+- Native SwiftUI experience with lightweight footprint
+- Preset-based scanning for common toolchains
+- History/audit view of cleanup actions
+- Risk-aware execution flow (no blind destructive behavior)
+- Built for workflows around Xcode, Node.js, Flutter, CocoaPods, Gradle and similar stacks
 
-## Key Features
+## What It Cleans
 
-- Smart scanning for developer-specific reclaim targets
-- Preset-based cleanup for common ecosystems
-- Dashboard-style overview for reclaimable space
-- Execution history with audit-friendly logs
-- Native-first cleanup with fallback flows
+- **Xcode:** DerivedData, build logs, archives (based on selected targets)
+- **Node ecosystem:** npm cache, Yarn cache, pnpm artifacts
+- **Apple/mobile:** CocoaPods leftovers, Flutter/Dart build cache
+- **Android/JVM:** Gradle cache/build residues
+- **General:** stale development temporary artifacts
 
-## Safety Model
+## Screenshots (Optional Gallery)
 
-- `.git` boundaries are respected
-- No silent destructive actions
-- Risk-aware cleanup behavior
-- Explicit user intent before irreversible operations
+<div align="center">
+<img src=".github/screenshot-dashboard.png" width="460" alt="Dashboard screenshot"/>
+<img src=".github/screenshot-history.png" width="460" alt="History screenshot"/>
+<img src=".github/screenshot-settings.png" width="460" alt="Settings screenshot"/>
+<img src=".github/screenshot-onboarding.png" width="460" alt="Onboarding screenshot"/>
+</div>
 
-## What It Can Clean
+> If these images are not in the repo yet, add them under `.github/` with the exact names above.
 
-- Xcode: DerivedData, archives, logs
-- JavaScript: npm cache, Yarn cache, pnpm store
-- Apple/mobile: CocoaPods artifacts, Flutter/Dart cache
-- Android/JVM: Gradle cache artifacts
-- General developer cache leftovers
+## How to Install and Use
 
-## Quick Start (User)
+1. Download the latest `.dmg` from [Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases)
+2. Drag `DevReclaim.app` to the `Applications` folder
+3. Launch the app and start a scan
+4. Review results and reclaim space safely
 
-1. Open the latest `.dmg` from Releases.
-2. Drag **DevReclaim.app** into **Applications**.
-3. Launch DevReclaim and run a scan.
-4. Review findings and apply cleanup safely.
+## macOS Compatibility
+
+| DevReclaim version | macOS version |
+| ------------------ | ------------- |
+| v1.1.x             | macOS 14+     |
 
 ## Build From Source
 
-Requirements:
+### Requirements
 
 - macOS 14+
 - Xcode 15+
 - Swift 5.9+
 
-Steps:
+### Build Steps
 
-1. Clone the repository.
-2. Open `Package.swift` in Xcode.
-3. Select **My Mac**.
-4. Build and run with `Cmd + R`.
+```sh
+git clone https://github.com/recepzgrmh/Mac-Developer-Cleaner.git
+cd Mac-Developer-Cleaner
+open Package.swift
+```
 
-## Package a DMG
+Then build/run with `Cmd + R` in Xcode.
 
-```bash
+### Package a DMG
+
+```sh
 bash scripts/package.sh 1.1.2
 ```
 
-This creates a distributable DMG under `dist/`.
+Output path:
+
+- `dist/DevReclaim_v1.1.2.dmg`
 
 ## Project Structure
 
-- `DevReclaim/Core/Engine`: scanning and core logic
-- `DevReclaim/Core/Executors`: cleanup execution paths
-- `DevReclaim/UI/ViewModels`: state and presentation logic
-- `DevReclaim/UI/Views`: SwiftUI screens/components
-- `DevReclaim/Models`: domain models
+- `DevReclaim/Core/Engine/` - scanner and cleanup orchestration
+- `DevReclaim/Core/Executors/` - cleanup execution backends
+- `DevReclaim/UI/ViewModels/` - app state and interaction logic
+- `DevReclaim/UI/Views/` - SwiftUI screens and reusable components
+- `DevReclaim/Models/` - domain models
 
 ## Contributing
 
-Contributions are welcome.
+Contributions are welcome. Open an issue or PR for:
 
-1. Fork the repo
-2. Create a feature branch
-3. Commit your changes
-4. Open a pull request
+- New cleanup presets
+- Scanner improvements
+- UX/performance improvements
+- Packaging/release automation
 
 ## License
 
-MIT License.
+MIT.
