@@ -80,56 +80,58 @@ codesign --force --deep --sign - "${APP_BUNDLE}"
 echo "5) Preparing DMG staging..."
 ln -s /Applications "${STAGING_DIR}/Applications"
 
+# Add open instructions for Gatekeeper bypass
+cat > "${STAGING_DIR}/How to Open.txt" <<'INSTRUCTIONS'
+If macOS says the app "cannot be opened" or is "damaged":
+
+Option 1 (easiest):
+  Right-click DevReclaim.app → Open → Open
+
+Option 2 (Terminal):
+  xattr -cr /Applications/DevReclaim.app
+
+This is normal for apps not distributed via the Mac App Store.
+INSTRUCTIONS
+
 echo "6) Creating DMG..."
-# Create a temporary read-write DMG
 hdiutil create -quiet -volname "${APP_NAME}" -srcfolder "${STAGING_DIR}" -ov -format UDRW -fs HFS+ "${TMP_DMG}"
 
-# Mount it to set the layout
 ATTACH_OUTPUT="$(hdiutil attach -readwrite -noverify -noautoopen "${TMP_DMG}")"
 DEVICE="$(echo "${ATTACH_OUTPUT}" | awk '/Apple_HFS|Apple_APFS/ {print $1; exit}')"
 MOUNT_POINT="$(echo "${ATTACH_OUTPUT}" | awk '/\/Volumes\// {print substr($0, index($0, "/Volumes/")); exit}')"
 
 if [[ -n "${MOUNT_POINT}" && -d "${MOUNT_POINT}" ]]; then
   echo "Setting DMG layout..."
-  osascript <<EOF
+  # Wait for Finder to register the newly mounted volume
+  sleep 2
+  osascript 2>/dev/null <<EOF || echo "  (Finder layout skipped — will still work)"
 tell application "Finder"
   tell disk "${APP_NAME}"
     open
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set the_bounds to {400, 100, 920, 440}
-    set bounds of container window to the_bounds
-    
+    set bounds of container window to {400, 100, 940, 460}
     set the_options to icon view options of container window
     set arrangement of the_options to not arranged
     set icon size of the_options to 120
-    set text size of the_options to 14
-    
-    set position of item "${APP_NAME}.app" of container window to {160, 150}
-    set position of item "Applications" of container window to {360, 150}
-    
-    # Wait for Finder to write its changes
-    delay 3
-    
-    # Enable autostart
-    set the_mount to "${MOUNT_POINT}"
-    # close container window
+    set text size of the_options to 13
+    set position of item "${APP_NAME}.app" of container window to {150, 170}
+    set position of item "Applications" of container window to {390, 170}
+    set position of item "How to Open.txt" of container window to {270, 330}
+    close
+    delay 2
   end tell
 end tell
 EOF
-  # Hide the DS_Store if possible
   sync
-  # Use bless to ensure the window opens automatically
-  bless --folder "${MOUNT_POINT}" --openfolder "${MOUNT_POINT}"
 fi
 
-sync
+sleep 1
 if [[ -n "${DEVICE}" ]]; then
   hdiutil detach "${DEVICE}" -quiet || hdiutil detach "${DEVICE}" -force -quiet
 fi
 
-# Convert to compressed DMG
 hdiutil convert -quiet "${TMP_DMG}" -format UDZO -imagekey zlib-level=9 -o "${DMG_PATH}"
 rm -f "${TMP_DMG}"
 rm -rf "${ICONSET_TMP}"
@@ -137,10 +139,9 @@ rm -rf "${ICONSET_TMP}"
 echo "7) Verifying DMG..."
 hdiutil verify "${DMG_PATH}" > /dev/null
 
+echo ""
 echo "Done: ${DMG_PATH}"
-echo "--------------------------------------------------"
-echo "IMPORTANT: If users still see a 'damaged' error,"
-echo "it is because the app is ad-hoc signed."
-echo "They must run: xattr -cr /Applications/${APP_NAME}.app"
-echo "To avoid this, sign with a Developer ID and notarize."
-echo "--------------------------------------------------"
+echo ""
+echo "NOTE: This app is ad-hoc signed (no Developer ID)."
+echo "Users must right-click → Open on first launch,"
+echo "OR run: xattr -cr /Applications/${APP_NAME}.app"

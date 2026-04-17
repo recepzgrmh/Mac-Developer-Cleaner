@@ -31,8 +31,8 @@ Clean Xcode DerivedData, npm/yarn/pnpm caches, CocoaPods leftovers, Gradle artif
 
 Go to [Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases) and download the latest `.dmg`.
 
-- Latest stable release: [v1.1.2](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/tag/v1.1.2)
-- Current DMG: `DevReclaim_v1.1.2.dmg`
+- Latest stable release: [v1.1.3](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/tag/v1.1.3)
+- Current DMG: `DevReclaim_v1.1.3.dmg`
 
 ## Major Features
 
@@ -66,8 +66,11 @@ Go to [Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases) a
 
 1. Download the latest `.dmg` from [Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases)
 2. Drag `DevReclaim.app` to the `Applications` folder
-3. Launch the app and start a scan
-4. Review results and reclaim space safely
+3. **First launch:** Right-click the app → **Open** → Open (macOS Gatekeeper prompt — one-time only)
+4. Start a scan, review results and reclaim space safely
+
+> [!NOTE]
+> DevReclaim is ad-hoc signed and not notarized. If macOS says the app is "damaged" or "from an unidentified developer", right-click → Open, or run `xattr -cr /Applications/DevReclaim.app` in Terminal.
 
 ## macOS Compatibility
 
@@ -96,12 +99,12 @@ Then build/run with `Cmd + R` in Xcode.
 ### Package a DMG
 
 ```sh
-bash scripts/package.sh 1.1.2
+bash scripts/package.sh 1.1.3
 ```
 
 Output path:
 
-- `dist/DevReclaim_v1.1.2.dmg`
+- `dist/DevReclaim_v1.1.3.dmg`
 
 ## Project Structure
 
