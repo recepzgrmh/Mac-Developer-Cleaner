@@ -22,3 +22,23 @@ _bmad-output/
 *.dmg
 *.app
 dist/
+
+# Logs & Temporary
+*.log
+*.profraw
+build_check.log
+
+# Sensitive / Secrets
+.env*
+*.key
+*.pem
+*.p12
+*.cert
+*.jks
+*.keystore
+*.mobileprovision
+
+# Project Documentation & AI Context (Untracked)
+UI_ARCHITECTURE.md
+UI_CODE_SUMMARY.md
+project-context.md

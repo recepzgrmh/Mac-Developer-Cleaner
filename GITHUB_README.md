@@ -18,7 +18,7 @@ Clean Xcode DerivedData, npm/yarn/pnpm caches, CocoaPods leftovers, Gradle artif
 <br/>
 <br/>
 
-<img src=".github/screenshot-main.png" width="920" alt="DevReclaim screenshot"/><br/>
+<img src="assets/screenshots/dashboard.png" width="920" alt="DevReclaim dashboard screenshot"/><br/>
 
 </div>
 
@@ -54,13 +54,13 @@ Go to [Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases) a
 ## Screenshots (Optional Gallery)
 
 <div align="center">
-<img src=".github/screenshot-dashboard.png" width="460" alt="Dashboard screenshot"/>
-<img src=".github/screenshot-history.png" width="460" alt="History screenshot"/>
-<img src=".github/screenshot-settings.png" width="460" alt="Settings screenshot"/>
-<img src=".github/screenshot-onboarding.png" width="460" alt="Onboarding screenshot"/>
+<img src="assets/screenshots/dashboard.png" width="460" alt="Dashboard screenshot"/>
+<img src="assets/screenshots/history.png" width="460" alt="History screenshot"/>
+<img src="assets/screenshots/settings.png" width="460" alt="Settings screenshot"/>
+<img src="assets/screenshots/projects.png" width="460" alt="Project analysis screenshot"/>
 </div>
 
-> If these images are not in the repo yet, add them under `.github/` with the exact names above.
+> New screenshots are located in `assets/screenshots/`.
 
 ## How to Install and Use
 

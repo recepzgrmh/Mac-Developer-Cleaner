@@ -14,6 +14,11 @@ ICONSET_TMP="${DIST_DIR}/AppIcon.iconset"
 TMP_DMG="${DIST_DIR}/${APP_NAME}_temp.dmg"
 DMG_PATH="${DIST_DIR}/${APP_NAME}_v${VERSION}.dmg"
 BUILD_LOG="${DIST_DIR}/build.log"
+ENTITLEMENTS="${ROOT_DIR}/DevReclaim/DevReclaim.entitlements"
+
+# Developer ID signing & notarization (set via env vars or leave empty for ad-hoc)
+SIGN_IDENTITY="${SIGN_IDENTITY:-}"          # e.g. "Developer ID Application: ..."
+NOTARY_PROFILE="${NOTARY_PROFILE:-}"        # keychain profile name set via notarytool store-credentials
 
 echo "Starting release packaging for ${APP_NAME} v${VERSION}"
 
@@ -70,17 +75,26 @@ cp "${ICONSET_SRC}/icon_512.png" "${ICONSET_TMP}/icon_512x512.png"
 cp "${ICONSET_SRC}/icon_512@2x.png" "${ICONSET_TMP}/icon_512x512@2x.png"
 iconutil -c icns "${ICONSET_TMP}" -o "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
 
-echo "4) Code Signing (Ad-hoc)..."
-# Ensure all files are readable by everyone
+echo "4) Code Signing..."
 chmod -R a+r "${APP_BUNDLE}"
 chmod +x "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
-# Sign the bundle and all internal components
-codesign --force --deep --sign - "${APP_BUNDLE}"
+
+if [[ -n "${SIGN_IDENTITY}" ]]; then
+  echo "   Using Developer ID: ${SIGN_IDENTITY}"
+  codesign --force --deep --options runtime --timestamp \
+    --entitlements "${ENTITLEMENTS}" \
+    --sign "${SIGN_IDENTITY}" \
+    "${APP_BUNDLE}"
+else
+  echo "   No SIGN_IDENTITY set — using ad-hoc signature."
+  codesign --force --deep --sign - "${APP_BUNDLE}"
+fi
 
 echo "5) Preparing DMG staging..."
 ln -s /Applications "${STAGING_DIR}/Applications"
 
-# Add open instructions for Gatekeeper bypass
+# Add open instructions (only needed for ad-hoc builds)
+if [[ -z "${SIGN_IDENTITY}" ]]; then
 cat > "${STAGING_DIR}/How to Open.txt" <<'INSTRUCTIONS'
 If macOS says the app "cannot be opened" or is "damaged":
 
@@ -92,6 +106,7 @@ Option 2 (Terminal):
 
 This is normal for apps not distributed via the Mac App Store.
 INSTRUCTIONS
+fi
 
 echo "6) Creating DMG..."
 hdiutil create -quiet -volname "${APP_NAME}" -srcfolder "${STAGING_DIR}" -ov -format UDRW -fs HFS+ "${TMP_DMG}"
@@ -139,9 +154,31 @@ rm -rf "${ICONSET_TMP}"
 echo "7) Verifying DMG..."
 hdiutil verify "${DMG_PATH}" > /dev/null
 
+if [[ -n "${SIGN_IDENTITY}" && -n "${NOTARY_PROFILE}" ]]; then
+  echo "8) Notarizing DMG..."
+  xcrun notarytool submit "${DMG_PATH}" \
+    --keychain-profile "${NOTARY_PROFILE}" \
+    --wait
+
+  echo "9) Stapling notarization ticket..."
+  xcrun stapler staple "${DMG_PATH}"
+
+  echo ""
+  echo "Gatekeeper check:"
+  spctl -a -t open --context context:primary-signature -vv "${DMG_PATH}" || true
+elif [[ -n "${SIGN_IDENTITY}" ]]; then
+  echo ""
+  echo "NOTE: NOTARY_PROFILE not set — skipping notarization."
+  echo "Set NOTARY_PROFILE to your keychain profile name and re-run to notarize."
+fi
+
 echo ""
 echo "Done: ${DMG_PATH}"
 echo ""
-echo "NOTE: This app is ad-hoc signed (no Developer ID)."
-echo "Users must right-click → Open on first launch,"
-echo "OR run: xattr -cr /Applications/${APP_NAME}.app"
+if [[ -n "${SIGN_IDENTITY}" && -n "${NOTARY_PROFILE}" ]]; then
+  echo "App is Developer ID signed and notarized. Gatekeeper will accept it."
+else
+  echo "NOTE: This app is ad-hoc signed (no Developer ID)."
+  echo "Users must right-click → Open on first launch,"
+  echo "OR run: xattr -cr /Applications/${APP_NAME}.app"
+fi
