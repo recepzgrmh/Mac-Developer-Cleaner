@@ -31,8 +31,8 @@ Clean Xcode DerivedData, npm/yarn/pnpm caches, CocoaPods leftovers, Gradle artif
 
 Go to [Releases](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases) and download the latest `.dmg`.
 
-- Latest stable release: [v1.1.3](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/tag/v1.1.3)
-- Current DMG: `DevReclaim_v1.1.3.dmg`
+- Latest stable release: [v1.1.4](https://github.com/recepzgrmh/Mac-Developer-Cleaner/releases/tag/v1.1.4)
+- Current DMG: `DevReclaim_v1.1.4.dmg`
 
 ## Major Features
 
@@ -99,12 +99,12 @@ Then build/run with `Cmd + R` in Xcode.
 ### Package a DMG
 
 ```sh
-bash scripts/package.sh 1.1.3
+bash scripts/package.sh 1.1.4
 ```
 
 Output path:
 
-- `dist/DevReclaim_v1.1.3.dmg`
+- `dist/DevReclaim_v1.1.4.dmg`
 
 ## Project Structure
 
